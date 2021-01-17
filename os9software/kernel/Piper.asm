@@ -1,36 +1,34 @@
-         nam   Piper
-         ttl   os9 device driver    
+ nam Pipe Device Driver
+ ttl Definitions
 
-         ifp1
-         use   os9defs
-         endc
-tylg     set   Drivr+Objct   
-atrv     set   ReEnt+rev
-rev      set   $01
-         mod   eom,name,tylg,atrv,start,size
-u0000    rmb   6
-size     equ   .
-         fcb   $03 
-name     equ   *
-         fcs   /Piper/
-         fcb   $02 
-start    equ   *
-         clrb  
-         rts   
-         nop   
-         clrb  
-         rts   
-         nop   
-         clrb  
-         rts   
-         nop   
-         clrb  
-         rts   
-         nop   
-         clrb  
-         rts   
-         nop   
-         clrb  
-         rts   
-         emod
-eom      equ   *
+Type set Drivr+Objct
+Revs set ReEnt+1
+ mod   PipeEnd,PipeNam,Type,Revs,PipeEnt,V.User
+ fcb Updat. mode
+PipeNam fcs "Piper"
+ fcb 2 edition number
+
+ use defsfile
+
+PipeEnt clrb
+ rts
+ nop
+ clrb read
+ rts
+ nop
+ clrb write
+ rts
+ nop
+ clrb getstat
+ rts
+ nop
+ clrb putstat
+ rts
+ nop
+ clrb terminate
+ rts
+
+ emod
+PipeEnd equ *
+
+ end

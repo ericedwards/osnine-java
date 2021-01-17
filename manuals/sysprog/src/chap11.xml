@@ -37,16 +37,16 @@ permits a BCS or BCC instruction immediately following the system
 call to branch on error/no error.</para>
   <para>Here is an example system call for the <xref linkend="i.close"/> service request:</para>
   <programlisting>
-LDA PATHNUM 
-SWI2 
-FCB $8B 
-BCS ERROR 
+LDA PATHNUM
+SWI2
+FCB $8B
+BCS ERROR
 </programlisting>
   <para>Using the assembler's <quote>OS9</quote> directive simplifies the call:</para>
   <programlisting>
-LDA PATHNUM 
-OS9 I$Close 
-BCS ERROR 
+LDA PATHNUM
+OS9 I$Close
+BCS ERROR
 </programlisting>
   <para>The I/O service requests are simpler to use than in many other
 operating systems because the calling program does not have to
@@ -1263,7 +1263,7 @@ can have the same user ID.
           <listitem>
             <simplelist>
               <member>LI - OS9p1</member>
-              <member>LII - OS9p2</member>
+              <member>LII - OS9p1</member>
             </simplelist>
           </listitem>
         </varlistentry>
@@ -1855,7 +1855,7 @@ skip one trailing comma or any number of trailing spaces.
           <listitem>
             <simplelist>
               <member>LI - None</member>
-              <member>LII - <simplelist type="inline"><member>F.DATLog*</member><member>P.LDAXY*</member></simplelist>
+              <member>LII - <simplelist type="inline"><member>F.DATLog*</member><member>F.LDAXY*</member></simplelist>
 </member>
             </simplelist>
           </listitem>
@@ -2022,7 +2022,7 @@ is a single byte value 0 - 255.
       <para>
 If the destination process for the signal is sleeping or waiting, it will
 be activated so that it may process the signal. The signal processing
-routine (intercept) will be, executed if a signal trap was set up (see
+routine (intercept) will be executed if a signal trap was set up (see
 <xref linkend="f.icpt"/>), otherwise, the signal will abort the destination process, and
 the signal code code becomes the exit status (see WAIT). An exception is
 the WAKEUP signal, which activates a sleeping process but does not cause
@@ -2161,12 +2161,12 @@ time interval if a signal is received, therefore. sleeping indefinately
 is a good way to wait for a signal or interrupt without wasting CPU time.
 </para>
       <para>
-The duration of a <quote>tick</quote> is system independent but is usually 100
+The duration of a <quote>tick</quote> is system dependent but is usually 100
 milliseconds on Level I (50 ms with 6840) and 10 milliseconds on Level II.
 </para>
       <para>Due to the fact that it is not known when the <xref linkend="f.sleep"/> request was
 made during the current tick, <xref linkend="f.sleep"/> can not be used
-to time more more than + or -1 tick.
+to time more accurately than + or -1 tick.
 A sleep of one tick is effectively a <quote>give up remaining
 time slice</quote> request; the process is immediately inserted into
 the active process queue and will resume execution when it reaches
@@ -2874,7 +2874,7 @@ previous call to F$STime has been made.
       <para>
 FUNCTION: UNLINK tells OS-9 that the module is no longer needed by the
 calling process. The module's link count is decremented, and the module
-is destroyed and.itstemory deallocated when the link count equals zero.
+is destroyed and its memory deallocated when the link count equals zero.
 The module will not be destroyed if in use by any other process(es)
 because its link count will be non-zero. In Level Two systems, the
 module is usually switched out of the process' address space. Also, any
@@ -2913,14 +2913,14 @@ module directory.
       <simplelist>
         <member>LI - 
             <simplelist type="inline">
-                <member>F$IoDel</member>
+                <member>F$IODel</member>
                 <member>F$DelBit*</member>
             </simplelist>
         </member>
         <member>LII -
             <simplelist type="inline">
                 <member>F$LDDDXY*</member>
-                <member>F$IoDel</member>
+                <member>F$IODel</member>
             </simplelist>
         </member>
       </simplelist>
@@ -5152,17 +5152,14 @@ SCF also uses ATTACH/DETACH to setup its second (echo) device.
       <para>
 FUNCTION: Given the number of an existing path, DUP returns a synonymous
 path number for the same file or device. <application>Shell</application> uses this service
-request when it redirects I/O. Service requests using either the old or
-new path numbers operate on the same file or device. It is usually not a
-good idea for more than one process to be doing 1/0 on the same path
-concurrently. On RBF files, unpredictable results may be produced.
+request when it redirects I/O.
+Service requests using either the old or new path numbers operate on the same file or device.
 </para>
       <para>
 NOTE: This only increments the <quote>use count</quote> of a path descriptor and
 returns the synonymous path number. The path descriptor is NOT copied.
-It is usually not a good idea for more than process to be doing 1/0 on
-the same path concurrently. On RBF files, unpredictable results may be
-produced.
+It is usually not a good idea for more than process to be doing I/O on the same path concurrently.
+On RBF files, unpredictable results may be produced.
 </para>
   <variablelist role="factsheet">
     <varlistentry>
@@ -5187,12 +5184,10 @@ LI and LII - <simplelist type="inline">
       <term>CAVEATS:</term>
       <listitem>
       <para>
-The DUP will always use the lowest available path number. For
-example, if the user does I$Close on path #0, then does I$Dup on path #4,
-then path #0 will be returned as the new path number. In this way, the
-standard I/O paths may be manipulated to contain any desired paths. In
-this way, the standard I/O paths may be manipulated to contain ant
-desired paths.
+The DUP will always use the lowest available path number.
+For example, if the user does I$Close on path #0, then does I$Dup on path #4,
+then path #0 will be returned as the new path number.
+In this way, the standard I/O paths may be manipulated to contain any desired paths.
 </para>
       </listitem>
     </varlistentry>
@@ -5267,10 +5262,10 @@ device parameters that:</para>
         </listitem>
       </orderedlist>
       <para>The exact operation of this call depends on the device driver and
-file manager associated with the path. A typical use is to
-determine a terminal's parameters for backspace character, delete
-character, echo on/off, null padding, paging, etc. It is commonly
-used in conjunction with the <xref linkend="i.setstt"/>
+file manager associated with the path.
+A typical use is to determine a terminal's parameters for backspace character, delete
+character, echo on/off, null padding, paging, etc.
+It is commonly used in conjunction with the <xref linkend="i.setstt"/>
 service request which is
 used to set the device operating parameters. Below are presently
 defined function codes for <xref linkend="i.getstt"/>:</para>
@@ -5802,11 +5797,11 @@ operations are permitted as follows:
 </literallayout>
       </para>
       <para>
-For RBF devices, Read mode should be used if preference to Update if the
+For RBF devices, Read mode should be used if preference to Update if the file
 is not going to be modified. This will inhibit record locking, and could
 dramatically improve system performance if more than one user is
 accessing the file. The access mode must conform to the access
-permission attributes associated with the file or device (see CREATE).
+permission attributes associated with the file or device (see <xref linkend="i.create"/>).
 Only the owner may access a file unless the appropriate <quote>public permit</quote>
 bits are set.
 </para>
@@ -6217,8 +6212,7 @@ condition. Note that a SEEK to address zero is the same as a <quote>rewind</quot
 operation.
 </para>
       <para>
-Seeks to non-random access devices are usually ignored and return without
-error.
+Seeks to non-random access devices are usually ignored and return without error.
 </para>
   <variablelist role="factsheet">
     <varlistentry>
@@ -6715,7 +6709,7 @@ SS.Lock (Code $10): Lock out a section of a file.
 FUNCTION: SS.Lock locks out a section of the file from the current
 position up to the number of bytes requested. If 0 bytes are requested,
 all locks (Record Lock, EOF Lock, and File Lock) are removed. If (X) and
-(U) contain SFFFF FFFF, then the entire file is locked out regardless of
+(U) contain $FFFF FFFF, then the entire file is locked out regardless of
 where the file pointer is. This is a special type of file lock that
 remains in effect until released by SS.Lock(O), a read or write of zero
 bytes, or the file is closed. There is no way to gain file lock using

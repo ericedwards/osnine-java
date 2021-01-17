@@ -1,134 +1,220 @@
-         nam   PipeMan
-         ttl   os9 file manager     
+ nam Pipe File Manager
 
-         ifp1
-         use   os9defs
-         endc
-tylg     set   FlMgr+Objct   
-atrv     set   ReEnt+rev
-rev      set   $01
-         mod   eom,name,tylg,atrv,PipeEnt,size
-u0000    rmb   0
-size     equ   .
-name     equ   *
-         fcs   /PipeMan/
-         fcb   $03 
-PipeEnt  equ   *
-         lbra  POpen     Create
-         lbra  POpen     Open
-         lbra  UnkSvc    MakDir
-         lbra  UnkSvc    ChgDir
-         lbra  UnkSvc    Delete
-         lbra  NoOp      Seek
-         lbra  PRead
-         lbra  PWrite
-         lbra  PRdLn
-         lbra  PWrLn
-         lbra  NoOp
-         lbra  NoOp
-         lbra  Close
+* Copyright 1980 by Microware Systems Corp.,
 
-UnkSvc   comb  
-         ldb   #E$UnkSVC
-         rts   
+* This source code is the proprietary confidential property of
+* Microware Systems Corporation, and is provided to licensee
+* solely  for documentation and educational purposes. Reproduction,
+* publication, or distribution in any form to any party other than
+* the licensee is strictly prohibited!
 
-NoOp     clrb  
-         rts   
+ ttl Module Header   
+*********
+*    Pipe File Manager
+*
+Type set FlMgr+Objct 
+Revs set ReEnt+1
+ mod PipeEnd,PipeNam,Type,Revs,PipeEnt,0
+PipeNam fcs "PipeMan"
+**********
+* Revision History
+*    edition 2    prehistoric
+*    edition 3    03/15/83  Moved Seek label
+*                           from Illegal Service Routines
+*                           to No Action Service Routines
 
-POpen    ldu   $06,y
-         ldx   $04,u
-         pshs  y
-         os9   F$PrsNam 
-         bcs   L0073
-         lda   -$01,y
-         bmi   L0058
-         leax  ,y
-         os9   F$PrsNam 
-         bcc   L0073
-L0058    sty   $04,u
-         puls  y
-         ldd   #$0100
-         os9   F$SRqMem 
-         bcs   L0072
-         stu   $08,y
-         stu   <$14,y
-         stu   <$16,y
-         leau  d,u
-         stu   <$12,y
-L0072    rts   
+ fcb 3 edition number
 
-L0073    comb  
-         ldb   #E$BPNam
-         puls  pc,y
+**********
+*
+*     Definitions
+*
+ use defsfile
 
-Close    lda   $02,y
-         bne   L0086
-         ldu   $08,y
+ org PD.FST
+PD.FRead rmb 1 Process ID of first reader waiting
+PD.NRead rmb 1 number of readers waiting
+PD.WRead rmb 1 wake-up reader flag
+PD.RdLn rmb 1 readln flag
+PD.FWrit rmb 1 Process ID of first write waiting
+PD.NWrit rmb 1 number of writers waiting
+PD.WWrit rmb 1 wake-up writer flag
+PD.WrLn rmb 1 writln flag
+PD.BEnd rmb 2 buffer end
+PD.NxIn rmb 2 next-in ptr
+PD.NxOut rmb 2 next-out ptr
+PD.Data rmb 1 data in buffer flag
+ org 0
+First rmb 1
+Waiting rmb 1
+Signal rmb 1
+RWSwitch equ (PD.FRead!PD.FWrit)-(PD.FRead&PD.FWrit)
+
+
+PipeEnt equ *
+ lbra Create
+ lbra Open
+ lbra MakDir
+ lbra ChgDir
+ lbra Delete
+ lbra Seek
+ lbra PRead
+ lbra PWrite
+ lbra PRdLn
+ lbra PWrLn
+ lbra Getstat
+ lbra Putstat
+ lbra Close
+
+**************************************************
+*
+*     Illegal Service routines
+*
+Makdir equ *
+ChgDir equ *
+Delete equ *
+ comb
+ ldb #E$UnkSVC err: unknown service request
+ rts 
+
+**************************************************
+*
+*     No Action Service routines
+*
+GetStat equ *
+PutStat equ *
+Seek equ *
+ clrb
+ rts 
+ page
+**********
+* Open - Pipe File Manager
+*
+Create equ *
+Open equ *
+ ldu PD.RGS,y
+ ldx R$X,u
+ pshs y
+ ifeq level-1
+ os9 F$PrsNam parse the device name
+ bcs OpenErr branch if error
+ lda -1,y
+ else
+ os9 F$PrsNam parse the device name
+ bcs OpenErr branch if error
+ ldx D.Proc
+ ldb P$Task,x
+ leax -1,y
+ OS9 F$LDABX
+ tsta
+ endc
+ bmi Open.A
+ leax  0,y
+ os9   F$PrsNam 
+ bcc   OpenErr
+Open.A    sty   R$X,u
+ puls  y
+ ldd   #$0100
+ ifeq level-1
+ os9 F$SRqMem get buffer
+ else
+ os9 F$SRqMem get buffer
+ endc
+ bcs   Open.B
+ stu   PD.BUF,y
+ stu   PD.NxIn,y
+ stu   PD.NxOut,y
+ leau  d,u
+ stu   PD.BEnd,y
+Open.B    rts 
+
+OpenErr comb
+ ldb   #E$BPNam
+ puls  pc,y
+ page
+**************************************************
+*
+Close    lda   PD.CNT,y
+         bne   Clos.A
+         ldu   PD.BUF,y
          ldd   #$0100
          os9   F$SRtMem 
-         bra   L00A1
-L0086    cmpa  $0B,y
-         bne   L008E
-         leax  $0A,y
-         bra   L0094
-L008E    cmpa  $0F,y
-         bne   L00A1
-         leax  $0E,y
-L0094    lda   ,x
-         beq   L00A1
-         ldb   $02,x
-         beq   L00A1
-         clr   $02,x
-         os9   F$Send   
-L00A1    clrb  
-         rts   
-
+         bra   Send.A
+Clos.A    cmpa  PD.NRead,y  $0B
+         bne   Clos.B
+         leax  PD.FST,y
+         bra   SendSign
+Clos.B    cmpa  PD.NWrit,y
+         bne   Send.A
+         leax  PD.FWrit,y
+SendSign    lda   PD.FRead-PD.FST,x
+         beq   Send.A
+         ldb   PD.WRead-PD.FST,x
+         beq   Send.A
+         clr   PD.WRead-PD.FST,x
+         os9   F$Send 
+Send.A    clrb
+         rts 
+ page
+**************************************************
+*
 PRdLn    ldb   #$0D
-         stb   $0D,y
-         bra   L00AB
+         stb   PD.RdLn,y
+         bra   Read
 
-PRead    clr   $0D,y
-L00AB    leax  $0A,y
-         lbsr  L0140
-         bcs   L00EB
+PRead    clr   PD.RdLn,y
+Read    leax  PD.FST,y
+         lbsr  GetCon
+         bcs   Read.G
          ldd   $06,u
-         beq   L00EB
-         ldx   $04,u
-         addd  $04,u
-         pshs  b,a
-         bra   L00C9
-L00BE    pshs  x
-         leax  $0A,y
-         lbsr  L016B
+         beq   Read.G
+         ldx   R$X,u
+         addd  R$X,u
+         pshs  d
+         bra   Read.C
+Read.A    pshs  x
+         leax  PD.FST,y
+         lbsr  Wait
+ ifeq level-1
          puls  x
-         bcs   L00DC
-L00C9    lbsr  L01DD
-         bcs   L00BE
+         bcs   Read.E
+ else
+ jmp NOWHERE
+ endc
+Read.C    lbsr  BuffOut
+         bcs   Read.A
+ ifeq level-1
          sta   ,x+
-         tst   $0D,y
-         beq   L00D8
-         cmpa  $0D,y
-         beq   L00DC
-L00D8    cmpx  ,s
-         bcs   L00C9
-L00DC    tfr   x,d
+ else
+ OS9 F$STABX transfer byte
+ leax 1,x move ptr
+ endc
+         tst   PD.RdLn,y
+         beq   Read.D
+         cmpa  PD.RdLn,y
+         beq   Read.E
+Read.D    cmpx  ,s
+         bcs   Read.C
+Read.E    tfr   x,d
          subd  ,s++
          addd  $06,u
          std   $06,u
-         bne   L00EA
-         ldb   #$D3
-         bra   L00EB
-L00EA    clrb  
-L00EB    leax  $0A,y
-         lbra  L019D
-
+         bne   Read.F
+         ldb   #E$EOF
+         bra   Read.G
+Read.F    clrb
+Read.G    leax  PD.FST,y
+         lbra  RelCon
+ page
+**************************************************
+*
 PWrLn    ldb   #$0D
-         stb   <$11,y
-         bra   L00FA
+         stb   PD.WrLn,y
+         bra   Write
 
-PWrite   clr   <$11,y
-L00FA    leax  $0E,y
-         lbsr  L0140
+PWrite   clr   PD.WrLn,y
+Write    leax  PD.FWrit,y
+         lbsr  GetCon
          bcs   L013C
          ldd   $06,u
          beq   L013C
@@ -136,56 +222,63 @@ L00FA    leax  $0E,y
          addd  $04,u
          pshs  b,a
          bra   L0118
-L010D    pshs  x
-         leax  $0E,y
-         lbsr  L016B
+Writ.A    pshs  x
+         leax  PD.FWrit,y
+         lbsr  Wait
          puls  x
          bcs   L0130
 L0118    lda   ,x
-         lbsr  L01B7
-         bcs   L010D
+         lbsr  BuffIn
+         bcs   Writ.A
          leax  $01,x
-         tst   <$11,y
+         tst   PD.WrLn,y
          beq   L012B
-         cmpa  <$11,y
+         cmpa  PD.WrLn,y
          beq   L0130
 L012B    cmpx  ,s
          bcs   L0118
-         clrb  
+         clrb
 L0130    pshs  b,cc
          tfr   x,d
          subd  $02,s
          addd  $06,u
          std   $06,u
          puls  x,b,cc
-L013C    leax  $0E,y
-         bra   L019D
-L0140    lda   ,x
-         beq   L0165
+L013C    leax  PD.FWrit,y
+         bra   RelCon
+ page
+**************************************************
+*
+GetCon    lda   ,x
+         beq   GetC.B
          cmpa  $05,y
-         beq   L0169
+         beq   GetC.C
          inc   $01,x
          ldb   $01,x
          cmpb  $02,y
-         bne   L0153
-         lbsr  L0094
-L0153    os9   F$IOQu   
+         bne   GetC.A
+         lbsr  SendSign
+GetC.A    os9   F$IOQu 
          dec   $01,x
          pshs  x
          ldx   D.Proc
-         ldb   <$36,x
+         ldb   P$Signal,x
          puls  x
-         beq   L0140
-         coma  
-         rts   
-L0165    ldb   $05,y
-         stb   ,x
-L0169    clrb  
-         rts   
-L016B    ldb   $01,x
-         incb  
+         beq   GetCon
+         coma
+         rts 
+
+GetC.B    ldb   $05,y
+         stb   0,x
+GetC.C    clrb
+         rts 
+ page
+**************************************************
+*
+Wait    ldb   $01,x
+         incb
          cmpb  $02,y
-         beq   L0199
+         beq   Wait.A
          stb   $01,x
          ldb   #$01
          stb   $02,x
@@ -194,64 +287,76 @@ L016B    ldb   $01,x
          tfr   x,d
          eorb  #$04
          tfr   d,x
-         lbsr  L0094
+         lbsr  SendSign
          ldx   #$0000
-         os9   F$Sleep  
+         os9   F$Sleep
          ldx   D.Proc
-         ldb   <$36,x
+         ldb   P$Signal,x
          puls  x
-         dec   $01,x
-         tstb  
+         dec   1,x
+         tstb
          bne   L019B
-         clrb  
-         rts   
-L0199    ldb   #$F5
-L019B    coma  
-         rts   
-L019D    pshs  u,b,cc
+         clrb
+         rts 
+
+Wait.A equ *
+ ldb   #E$Write
+L019B    coma
+         rts 
+
+**************************************************
+*
+RelCon    pshs  u,b,cc
          ldu   D.Proc
          lda   <$11,u
          bne   L01AA
          ldb   $01,x
-         bne   L01B5
+         bne   RelC.B
 L01AA    sta   ,x
          tfr   x,d
          eorb  #$04
          tfr   d,x
-         lbsr  L0094
-L01B5    puls  pc,u,b,cc
-L01B7    pshs  x,b
-         ldx   <$14,y
-         ldb   <$18,y
+         lbsr  SendSign
+RelC.B    puls  pc,u,b,cc
+
+ page
+**************************************************
+*
+BuffIn    pshs  x,b
+         ldx   PD.NxIn,y
+         ldb   PD.Data,y
          beq   L01C9
-         cmpx  <$16,y
+         cmpx  PD.NxOut,y
          bne   L01CE
-         comb  
+         comb
          puls  pc,x,b
+
 L01C9    ldb   #$01
-         stb   <$18,y
+         stb   PD.Data,y
 L01CE    sta   ,x+
-         cmpx  <$12,y
+         cmpx  PD.BEnd,y
          bcs   L01D7
-         ldx   $08,y
-L01D7    stx   <$14,y
-         clrb  
+         ldx   PD.BUF,y
+L01D7    stx   PD.NxIn,y
+         clrb
          puls  pc,x,b
-L01DD    lda   <$18,y
-         bne   L01E4
-         comb  
-         rts   
-L01E4    pshs  x
-         ldx   <$16,y
+
+BuffOut lda   PD.Data,y
+         bne   BufO.A
+         comb
+         rts 
+BufO.A    pshs  x
+         ldx   PD.NxOut,y
          lda   ,x+
-         cmpx  <$12,y
-         bcs   L01F2
-         ldx   $08,y
-L01F2    stx   <$16,y
-         cmpx  <$14,y
-         bne   L01FD
-         clr   <$18,y
-L01FD    andcc #$FE
+         cmpx  PD.BEnd,y
+         bcs   BufO.B
+         ldx   PD.BUF,y
+BufO.B    stx   PD.NxOut,y
+         cmpx  PD.NxIn,y
+         bne   BufO.C
+         clr   PD.Data,y
+BufO.C    andcc #$FE
          puls  pc,x
+
          emod
-eom      equ   *
+PipeEnd      equ   *

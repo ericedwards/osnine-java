@@ -1,0 +1,135 @@
+ opt -l
+ ttl System Type Definitions for a GIMIX Level 2
+ page
+****************************************
+
+ ifeq CPUType-GIMIX
+************************************************************
+*
+*     Dynamic Address Translator Definitions
+*
+DAT.BlCt equ 16 D.A.T. blocks/address space available
+*
+***************
+DAT.BlUs equ 15 blocks available for RAM in address space
+DAT.GBlk equ DAT.BlCt*2 number of graphics blocks
+
+DAT.Blsz equ $1000 D.A.T. block size in bytes
+DAT.ImSz equ DAT.BlCt*2 D.A.T. Image size
+
+***************
+*
+* DAT.Addr calculates a mask for the top bits of the
+* logical address that are mapped by the MMU
+DAT.Addr equ -(DAT.BlSz/256) D.A.T. MSB Address bits
+*
+***************
+
+
+DAT.Task equ $FF7F Task register address
+DAT.TMsk equ $0F bits of register for task number
+DAT.Uniq equ 1 bits of DAT Task register are not used for other things
+*
+***************
+
+DAT.TkCt equ 16 task maps in the MMU
+DAT.Regs equ $FFF0 DAT Block Registers base address
+
+***************
+*
+* One block number must be guaranteed never to
+* contain memory, (ROM or RAM). That block number
+* is used by OS9 in the block map and DAT images
+* to indicate an unallocated logical block
+DAT.Free equ $FC
+*
+***************
+
+DAT.BlMx equ $FF maximum block number
+DAT.BMSz equ $100 Block Map size (one byte per block)
+DAT.WrPr equ 0 no Block Write Protect bit
+DAT.WrEn equ 0 no Block Write Enable bit
+
+***************
+SysTask equ $20 Gimix System Task number
+*
+***************
+
+IOBlock equ $FE The block number for the I/O
+ROMBlock equ $FF ROM block mapped in on ColdStart at $F000
+ROMCount equ 1 number of blocks of ROM to so map in
+RAMCount equ 1 initial blocks of RAM
+*
+***************
+
+ROMCheck equ Limited check only top 64k for ROM
+RAMCheck equ BlockTyp check only first bytes of RAM blocks
+LastRAM equ IOBlock maximum RAM block number
+
+
+
+***************
+*
+* If the I/O is addressed whenever the top
+* address lines of the micro, (ie the logical
+* bus), take a certain value, rather than being
+* addressed through the DAT, then MappedIO must
+* be set false (0)
+MappedIO equ 1
+*
+***************
+**********
+* Several system modules expect to be
+* able to abort the startup procedure
+* and retry, by jumping through a ROM
+* vector (usually the reset vector).
+*
+D$REBOOT equ $FFEE use an unused vector
+*
+**********
+
+ClocType set M58167
+TickSec set 10 ticks per second
+DiskType set G68
+DrvCnt set 4 four drives
+
+ ifeq DiskType-G68
+DPort equ $E3B0
+ endc
+ ifeq DiskType-DCB4
+DPort equ $E3C0
+ endc
+ ifeq ClocType-M58167
+A.Clock equ $E220
+ endc
+ ifeq ClocType-MC6840
+A.Clock equ $E210
+ endc
+
+A.Term equ $E004
+A.T1 equ $E020
+A.T2 equ $E024
+A.T3 equ $E030
+A.T.init equ $15
+A.P1 equ $E000
+A.P equ $E042
+*A.KBD set A.P+2 keyboard port address
+*A.KLoad set A.KBD port whose control reg has keyboard LOAD
+*A.GCon equ DAT.Task+2 graphics control port
+*A.Cont equ DAT.Task+1 control reg with CONTROL bit
+*A.Clock set $E220
+*A.DskSel equ A.Mouse disk select port
+*A.Beeper equ A.DskSel+2 port with beeper on it
+*A.ChrSet equ A.Beeper port with 'character set select'
+*A.Baud equ A.Beeper port with baud rate setting
+
+B.DPHalt equ $80 DMA processor HALT bit in disk Select port
+B.DPNMI equ $80 DMA processor interrupt bit in DAT Task reg
+B.Bell equ 1 beeper bit
+B.Contrl equ $08 CA2 is CONTROL bit
+B.ChrSet equ $40 character set select bit
+B.MPHalt equ 2 Main Processor HALT bit
+B.PDir equ $80 printer port buffer direction bit
+ endc
+ opt l
+

@@ -1,0 +1,22 @@
+ opt -c
+ opt f
+* NOTE: This file assumes Defs Directory in on Root
+*       of current Disk Device
+ ifp1
+ use systype.gimix
+ use sysdefs.gimix
+ use os9defs
+ use os9iodefs
+ use os9rbfdefs
+ use os9scfdefs
+ use os9sysdefs.lii
+
+DriveCnt set 4 drives max on system
+ endc
+
+Y2K equ 1
+
+normal equ 0 normal screen size
+small equ 1 small screen size
+Screen equ normal
+

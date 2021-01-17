@@ -1,0 +1,8 @@
+ ifp1
+ use os9defs
+ use os9sysdefs.lii
+ use os9iodefs
+ use os9rbfdefs
+ use os9scfdefs
+ use systype
+ endc

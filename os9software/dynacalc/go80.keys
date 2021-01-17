@@ -1,0 +1,56 @@
+*
+* Terminal characteristics for an 80-column GO51 compatible terminal
+* For T/F values, $00 if False, $FF if True
+* Sequences must always end with $FF
+*
+M0088    fcb   $FF,$FF,$FF,$FF    Cursor on (3 bytes)
+M008C    fcb   $FF,$FF,$FF,$FF    Cursor off (3 bytes)
+M0090    fcb   $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
+         fcb   $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF   Terminal setup (15 bytes)
+M00A0    fcb   $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF   Terminal kiss-off (7 bytes)
+M00A8    fcb   $FF,$FF,$FF,$FF    Sequence to turn on printer (3 bytes)
+         fcb   $FF,$FF,$FF,$FF    Sequence to turn off printer (3 bytes)
+CURSPOS  fcb   $1B,$41,$88,$99,$FF,$FF,$FF,$FF    Cyrsor XY (7 bytes)
+M00B8    fcb   $1B,$42,$FF,$FF,$FF,$FF    Cursor clear to EOL (5 bytes)
+M00BE    fcb   $1B,$4A,$FF,$FF,$FF,$FF    Cursor clear to end of screen (5 bytes)
+REVON    fcb   $1B,$46,$FF,$FF,$FF,$FF,$FF,$FF    Hilite on (7 bytes)
+REVOFF   fcb   $1B,$47,$FF,$FF,$FF,$FF,$FF,$FF    Hilite off (7 bytes)
+M00D4    fcb   $08,$20,$08,$FF,$FF,$FF  Destructive backspace (5 bytes)
+M00DA    fcb   $08,$FF,$FF,$FF   non-destructive backspace (3 bytes)
+M00DE    fcc   "DragonPlus Board"  Terminal name (16 chars)
+M00EE    fcb   $04
+         fcb   $00
+M00F0    fcb   $00
+         fcb   $00
+         fcb   $00
+         fcb   $00
+         fcb   $00
+         fcb   $00
+         fcb   $00
+M00F7    fcb   $04  Log-off key
+M00F8    fcb   $00  Upper case only T/F
+         fcb   $00  Number of line feeds after each line
+M00FA    fcb   $00
+M00FB    fcb   $00  Keep helps  T/F
+         fcb   $FF  print borders  T/F
+         fcb   79  Printer page width
+         fcb   $00  Pagination  T/F
+M00FF    fcb   57  Lines per printer page
+M0100    fcb   $0C     Up-arrow
+DOWNKEY  fcb   $0A     Down-arrow
+         fcb   $18     Left-arrow
+         fcb   $09     Right-arrow
+         fcb   $1C     Home key    (Ctrl-\)
+         fcb   $19     Jump window (Ctrl-Y)
+M0106    fcb   $07   Bell character
+GETADDR  fcb   $1A   Get address (Ctrl-Z)
+         fcb   $03   Flush type-ahead buffer (Ctrl-C)
+         fcb   $08   Backspace key
+         fcb   $00   direct cursor addressing row offset
+         fcb   $00   direct cursor addressing columns offset
+M010C    fcb   $02
+         fcb   24   number of rows on screen
+         fcb   79   number of columns on screen
+         fcb   $0F  Edit overlay (Ctrl-O)
+M0110    fcb   $03  Flush type-ahead buffer (Ctrl-C)
+         fcb   $05  Edit from entry level (Ctrl-E)
